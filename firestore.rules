@@ -24,14 +24,14 @@ service cloud.firestore {
         && data.badges is list
         && data.completedCount is int
         && data.categories is map
-        && (data.get('chessUsername', '') is string)
+        && (!data.keys().hasAny(['chessUsername']) || data.chessUsername is string)
         && data.updatedAt == request.time;
     }
 
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidUser(incoming());
-      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && (
         // Standard stat update
         incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'level', 'streak', 'lastActiveDate', 'badges', 'completedCount', 'categories', 'updatedAt', 'chessUsername'])
       );
@@ -39,8 +39,9 @@ service cloud.firestore {
 
     // Mission Validation
     function isValidMission(data) {
-      return data.keys().hasAll(['userId', 'name', 'timeRange', 'durationMinutes', 'category', 'isCompleted', 'notes', 'date', 'updatedAt'])
-        && data.keys().size() == 9
+      return data.keys().hasAll(['id', 'userId', 'name', 'timeRange', 'durationMinutes', 'category', 'isCompleted', 'notes', 'date', 'updatedAt'])
+        && data.keys().size() == 10
+        && data.id is string
         && data.userId == request.auth.uid
         && data.name is string && data.name.size() <= 200
         && data.timeRange is string
@@ -54,13 +55,13 @@ service cloud.firestore {
 
     match /users/{userId}/missions/{missionId} {
       allow list: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidMission(incoming());
-      allow update: if isOwner(userId) && isValidMission(incoming()) && (
+      allow get: if isOwner(userId) && isValidId(missionId);
+      allow create: if isOwner(userId) && isValidId(missionId) && isValidMission(incoming());
+      allow update: if isOwner(userId) && isValidId(missionId) && isValidMission(incoming()) && (
         // Full update (notes, completion)
         incoming().diff(existing()).affectedKeys().hasOnly(['isCompleted', 'notes', 'updatedAt'])
       );
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) && isValidId(missionId);
     }
   }
 }

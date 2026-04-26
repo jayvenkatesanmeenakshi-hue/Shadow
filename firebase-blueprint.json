@@ -31,6 +31,7 @@
       "description": "A daily mission instance for a specific user.",
       "type": "object",
       "properties": {
+        "id": { "type": "string" },
         "userId": { "type": "string" },
         "name": { "type": "string" },
         "timeRange": { "type": "string" },
@@ -41,7 +42,7 @@
         "date": { "type": "string" },
         "updatedAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["userId", "name", "timeRange", "durationMinutes", "category", "isCompleted", "notes", "date", "updatedAt"]
+      "required": ["id", "userId", "name", "timeRange", "durationMinutes", "category", "isCompleted", "notes", "date", "updatedAt"]
     }
   },
   "firestore": {
