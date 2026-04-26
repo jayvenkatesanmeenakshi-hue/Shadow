@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+@theme {
+  --color-shadow-bg: #050505;
+  --color-shadow-card: #0a0a0a;
+  --color-shadow-border: #1a1a1a;
+  --color-shadow-text: #e0e0e0;
+  --color-shadow-muted: #666666;
+  --color-shadow-accent: #3b82f6;
+  
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer base {
+  body {
+    @apply bg-shadow-bg text-shadow-text font-sans antialiased;
+  }
+}
+
+.shadow-mode {
+  @apply opacity-80 contrast-125 grayscale-[0.5];
+}

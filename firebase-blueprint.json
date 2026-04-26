@@ -1,0 +1,57 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User statistics and progress tracking.",
+      "type": "object",
+      "properties": {
+        "xp": { "type": "integer" },
+        "level": { "type": "integer" },
+        "streak": { "type": "integer" },
+        "lastActiveDate": { "type": "string", "format": "date" },
+        "badges": { "type": "array", "items": { "type": "string" } },
+        "completedCount": { "type": "integer" },
+        "categories": {
+          "type": "object",
+          "properties": {
+            "logic": { "type": "integer" },
+            "observation": { "type": "integer" },
+            "strategy": { "type": "integer" },
+            "discipline": { "type": "integer" }
+          },
+          "required": ["logic", "observation", "strategy", "discipline"]
+        },
+        "chessUsername": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["xp", "level", "streak", "lastActiveDate", "badges", "completedCount", "categories", "updatedAt"]
+    },
+    "Mission": {
+      "title": "Mission Record",
+      "description": "A daily mission instance for a specific user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "timeRange": { "type": "string" },
+        "durationMinutes": { "type": "integer" },
+        "category": { "type": "string", "enum": ["Warmup", "Analysis", "Focus", "Social", "Reflection", "Gaming"] },
+        "isCompleted": { "type": "boolean" },
+        "notes": { "type": "string" },
+        "date": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "timeRange", "durationMinutes", "category", "isCompleted", "notes", "date", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Public user profile and stats."
+    },
+    "users/{userId}/missions/{missionId}": {
+      "schema": "Mission",
+      "description": "Individual mission records for a user."
+    }
+  }
+}

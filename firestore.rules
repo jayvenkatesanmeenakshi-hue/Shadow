@@ -1,0 +1,66 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Identity Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // User Profile Validation
+    function isValidUser(data) {
+      return data.keys().hasAll(['xp', 'level', 'streak', 'lastActiveDate', 'badges', 'completedCount', 'categories', 'updatedAt'])
+        && (data.keys().size() == 8 || (data.keys().size() == 9 && data.keys().hasAll(['chessUsername'])))
+        && data.xp is int
+        && data.level is int
+        && data.streak is int
+        && data.lastActiveDate is string
+        && data.badges is list
+        && data.completedCount is int
+        && data.categories is map
+        && (data.get('chessUsername', '') is string)
+        && data.updatedAt == request.time;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUser(incoming());
+      allow update: if isOwner(userId) && isValidUser(incoming()) && (
+        // Standard stat update
+        incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'level', 'streak', 'lastActiveDate', 'badges', 'completedCount', 'categories', 'updatedAt', 'chessUsername'])
+      );
+    }
+
+    // Mission Validation
+    function isValidMission(data) {
+      return data.keys().hasAll(['userId', 'name', 'timeRange', 'durationMinutes', 'category', 'isCompleted', 'notes', 'date', 'updatedAt'])
+        && data.keys().size() == 9
+        && data.userId == request.auth.uid
+        && data.name is string && data.name.size() <= 200
+        && data.timeRange is string
+        && data.durationMinutes is int
+        && data.category in ['Warmup', 'Analysis', 'Focus', 'Social', 'Reflection', 'Gaming']
+        && data.isCompleted is bool
+        && data.notes is string && data.notes.size() <= 5000
+        && data.date is string
+        && data.updatedAt == request.time;
+    }
+
+    match /users/{userId}/missions/{missionId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidMission(incoming());
+      allow update: if isOwner(userId) && isValidMission(incoming()) && (
+        // Full update (notes, completion)
+        incoming().diff(existing()).affectedKeys().hasOnly(['isCompleted', 'notes', 'updatedAt'])
+      );
+      allow delete: if isOwner(userId);
+    }
+  }
+}
