@@ -43,6 +43,32 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "userId", "name", "timeRange", "durationMinutes", "category", "isCompleted", "notes", "date", "updatedAt"]
+    },
+    "JournalTopic": {
+      "title": "Journal Topic",
+      "description": "A high-level category for deductions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "createdAt"]
+    },
+    "JournalEntry": {
+      "title": "Journal Entry",
+      "description": "Daily deduction log for a specific topic.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "topicId": { "type": "string" },
+        "userId": { "type": "string" },
+        "date": { "type": "string" },
+        "deductions": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "topicId", "userId", "date", "deductions", "updatedAt"]
     }
   },
   "firestore": {
@@ -53,6 +79,14 @@
     "users/{userId}/missions/{missionId}": {
       "schema": "Mission",
       "description": "Individual mission records for a user."
+    },
+    "users/{userId}/topics/{topicId}": {
+      "schema": "JournalTopic",
+      "description": "User journal topics."
+    },
+    "users/{userId}/topics/{topicId}/entries/{entryId}": {
+      "schema": "JournalEntry",
+      "description": "Daily entries for a specific topic."
     }
   }
 }

@@ -42,7 +42,29 @@ export const LEVELS = [
 export const XP_PER_LEVEL = 500;
 
 export const BADGES = [
-  { id: 'streak-3', name: 'Consistent Mind', description: '3-day streak', threshold: 3 },
-  { id: 'streak-7', name: 'Pattern Seeker', description: '7-day streak', threshold: 7 },
-  { id: 'streak-30', name: 'Shadow Thinker', description: '30-day streak', threshold: 30 },
+  { id: 'streak_3', name: 'Persistent Shadow', description: 'Maintain a 3-day streak', threshold: 3 },
+  { id: 'streak_7', name: 'Shadow Awakened', description: 'Maintain a 7-day streak', threshold: 7 },
+  { id: 'streak_30', name: 'Master Deduction', description: 'Maintain a 30-day streak', threshold: 30 }
 ];
+
+export interface JournalTopic {
+  id: string;
+  userId: string;
+  name: string;
+  createdAt: any;
+}
+
+export interface JournalEntry {
+  id: string;
+  topicId: string;
+  userId: string;
+  date: string;
+  deductions: string;
+  updatedAt: any;
+}
+
+export interface IntelligenceReport {
+  analysis: string;
+  percentile: number;
+  updatedAt: any;
+}

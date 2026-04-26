@@ -63,5 +63,43 @@ service cloud.firestore {
       );
       allow delete: if isOwner(userId) && isValidId(missionId);
     }
+
+    // Journal Validation
+    function isValidTopic(data) {
+      return data.keys().hasAll(['id', 'userId', 'name', 'createdAt'])
+        && data.keys().size() == 4
+        && data.userId == request.auth.uid
+        && data.name is string && data.name.size() <= 100
+        && data.createdAt == request.time;
+    }
+
+    function isValidEntry(data) {
+      return data.keys().hasAll(['id', 'topicId', 'userId', 'date', 'deductions', 'updatedAt'])
+        && data.keys().size() == 6
+        && data.userId == request.auth.uid
+        && data.date is string
+        && data.deductions is string && data.deductions.size() <= 10000
+        && data.updatedAt == request.time;
+    }
+
+    match /users/{userId}/topics/{topicId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidTopic(incoming());
+      allow update: if isOwner(userId) && isValidTopic(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['name'])
+      );
+      allow delete: if isOwner(userId);
+    }
+
+    match /users/{userId}/topics/{topicId}/entries/{entryId} {
+      allow list: if isOwner(userId);
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidEntry(incoming());
+      allow update: if isOwner(userId) && isValidEntry(incoming()) && (
+        incoming().diff(existing()).affectedKeys().hasOnly(['deductions', 'updatedAt'])
+      );
+      allow delete: if isOwner(userId);
+    }
   }
 }

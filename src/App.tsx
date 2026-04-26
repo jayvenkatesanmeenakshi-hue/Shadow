@@ -15,18 +15,22 @@ import {
   Zap,
   Sword,
   LogIn,
-  LogOut
+  LogOut,
+  BookText,
+  BrainCircuit
 } from 'lucide-react';
 import { useShadowStore } from './hooks/useShadowStore';
 import { MissionCard } from './components/MissionCard';
 import { FocusMode } from './components/FocusMode';
 import { StatsDashboard } from './components/StatsDashboard';
+import { JournalTab } from './components/JournalTab';
+import { IntelligenceReport } from './components/IntelligenceReport';
 import { Mission } from './types';
 import { useAuth } from './context/AuthContext';
 import { signInWithGoogle, auth } from './lib/firebase';
 import { signOut } from 'firebase/auth';
 
-type Tab = 'missions' | 'stats' | 'settings';
+type Tab = 'missions' | 'stats' | 'journal' | 'intelligence' | 'settings';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
@@ -108,6 +112,8 @@ export default function App() {
 
         <NavButton active={activeTab === 'missions'} onClick={() => setActiveTab('missions')} icon={LayoutDashboard} label="Missions" />
         <NavButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} icon={BarChart3} label="Analysis" />
+        <NavButton active={activeTab === 'journal'} onClick={() => setActiveTab('journal')} icon={BookText} label="Journal" />
+        <NavButton active={activeTab === 'intelligence'} onClick={() => setActiveTab('intelligence')} icon={BrainCircuit} label="Intelligence" />
         <NavButton active={activeTab === 'settings'} onClick={() => setActiveTab('settings')} icon={SettingsIcon} label="System" />
         
         <div className="md:mt-auto">
@@ -188,6 +194,28 @@ export default function App() {
               exit={{ opacity: 0 }}
             >
               <StatsDashboard stats={stats} />
+            </motion.section>
+          )}
+
+          {activeTab === 'journal' && (
+            <motion.section 
+              key="journal"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <JournalTab />
+            </motion.section>
+          )}
+
+          {activeTab === 'intelligence' && (
+            <motion.section 
+              key="intelligence"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <IntelligenceReport />
             </motion.section>
           )}
 

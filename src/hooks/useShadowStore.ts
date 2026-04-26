@@ -8,12 +8,14 @@ import {
   onSnapshot, 
   query, 
   where,
+  orderBy,
   serverTimestamp,
-  writeBatch
+  writeBatch,
+  addDoc
 } from 'firebase/firestore';
 import { db, OperationType, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Mission, UserStats, LEVELS, XP_PER_LEVEL, BADGES } from '../types';
+import { Mission, UserStats, LEVELS, XP_PER_LEVEL, BADGES, JournalTopic, JournalEntry } from '../types';
 import { DEFAULT_MISSIONS, FOCUS_ROTATION } from '../constants';
 
 const INITIAL_STATS: UserStats = {
@@ -204,12 +206,62 @@ export function useShadowStore() {
     }
   };
 
+  const addJournalTopic = async (name: string) => {
+    if (!user) return;
+    const topicsRef = collection(db, 'users', user.uid, 'topics');
+    try {
+      const docRef = await addDoc(topicsRef, {
+        userId: user.uid,
+        name,
+        createdAt: serverTimestamp()
+      });
+      // Add 'id' field as per validation rules
+      await updateDoc(docRef, { id: docRef.id });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/topics`);
+    }
+  };
+
+  const addJournalEntry = async (topicId: string, date: string, deductions: string) => {
+    if (!user) return;
+    const entriesRef = collection(db, 'users', user.uid, 'topics', topicId, 'entries');
+    try {
+      const docRef = await addDoc(entriesRef, {
+        topicId,
+        userId: user.uid,
+        date,
+        deductions,
+        updatedAt: serverTimestamp()
+      });
+      // Add 'id' field
+      await updateDoc(docRef, { id: docRef.id });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/topics/${topicId}/entries`);
+    }
+  };
+
+  const updateJournalEntry = async (topicId: string, entryId: string, deductions: string) => {
+    if (!user) return;
+    const entryRef = doc(db, 'users', user.uid, 'topics', topicId, 'entries', entryId);
+    try {
+      await updateDoc(entryRef, {
+        deductions,
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/topics/${topicId}/entries/${entryId}`);
+    }
+  };
+
   return {
     stats,
     missions,
     completeMission,
     updateMissionNotes,
     setChessUsername,
+    addJournalTopic,
+    addJournalEntry,
+    updateJournalEntry,
     loading
   };
 }
