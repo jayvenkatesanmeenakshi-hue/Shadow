@@ -26,13 +26,9 @@ export function IntelligenceReport() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // We pull data on demand when Generate Report is clicked
   useEffect(() => {
-    if (!user) return;
-    const userRef = collection(db, 'users');
-    const unsubscribe = onSnapshot(query(userRef), () => {
-      // Just a trigger to refresh if needed, but we mostly pull on demand for AI
-    });
-    return () => unsubscribe();
+    // Component cleanup if necessary
   }, [user]);
 
   const generateReport = async () => {
@@ -41,10 +37,11 @@ export function IntelligenceReport() {
     setError(null);
     try {
       // 1. Fetch Stats
-      const userDoc = await getDocs(query(collection(db, 'users'), orderBy('xp', 'desc'))); // Dummy query to get current user data or just use existing stats from hook
-      // Actually let's just use the current user doc
       const { doc, getDoc } = await import('firebase/firestore');
       const userSnap = await getDoc(doc(db, 'users', user.uid));
+      if (!userSnap.exists()) {
+        throw new Error("User profile not found. Please complete a mission first.");
+      }
       const currentStats = userSnap.data() as UserStats;
 
       // 2. Fetch all Topics & Entries

@@ -208,15 +208,14 @@ export function useShadowStore() {
 
   const addJournalTopic = async (name: string) => {
     if (!user) return;
-    const topicsRef = collection(db, 'users', user.uid, 'topics');
+    const topicRef = doc(collection(db, 'users', user.uid, 'topics'));
     try {
-      const docRef = await addDoc(topicsRef, {
+      await setDoc(topicRef, {
+        id: topicRef.id,
         userId: user.uid,
         name,
         createdAt: serverTimestamp()
       });
-      // Add 'id' field as per validation rules
-      await updateDoc(docRef, { id: docRef.id });
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/topics`);
     }
@@ -224,17 +223,16 @@ export function useShadowStore() {
 
   const addJournalEntry = async (topicId: string, date: string, deductions: string) => {
     if (!user) return;
-    const entriesRef = collection(db, 'users', user.uid, 'topics', topicId, 'entries');
+    const entryRef = doc(collection(db, 'users', user.uid, 'topics', topicId, 'entries'));
     try {
-      const docRef = await addDoc(entriesRef, {
+      await setDoc(entryRef, {
+        id: entryRef.id,
         topicId,
         userId: user.uid,
         date,
         deductions,
         updatedAt: serverTimestamp()
       });
-      // Add 'id' field
-      await updateDoc(docRef, { id: docRef.id });
     } catch (err) {
       handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/topics/${topicId}/entries`);
     }

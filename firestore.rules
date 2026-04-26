@@ -32,7 +32,6 @@ service cloud.firestore {
       allow get: if isOwner(userId) && isValidId(userId);
       allow create: if isOwner(userId) && isValidId(userId) && isValidUser(incoming());
       allow update: if isOwner(userId) && isValidId(userId) && isValidUser(incoming()) && (
-        // Standard stat update
         incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'level', 'streak', 'lastActiveDate', 'badges', 'completedCount', 'categories', 'updatedAt', 'chessUsername'])
       );
     }
@@ -41,7 +40,7 @@ service cloud.firestore {
     function isValidMission(data) {
       return data.keys().hasAll(['id', 'userId', 'name', 'timeRange', 'durationMinutes', 'category', 'isCompleted', 'notes', 'date', 'updatedAt'])
         && data.keys().size() == 10
-        && data.id is string
+        && isValidId(data.id)
         && data.userId == request.auth.uid
         && data.name is string && data.name.size() <= 200
         && data.timeRange is string
@@ -54,11 +53,10 @@ service cloud.firestore {
     }
 
     match /users/{userId}/missions/{missionId} {
-      allow list: if isOwner(userId);
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
       allow get: if isOwner(userId) && isValidId(missionId);
       allow create: if isOwner(userId) && isValidId(missionId) && isValidMission(incoming());
       allow update: if isOwner(userId) && isValidId(missionId) && isValidMission(incoming()) && (
-        // Full update (notes, completion)
         incoming().diff(existing()).affectedKeys().hasOnly(['isCompleted', 'notes', 'updatedAt'])
       );
       allow delete: if isOwner(userId) && isValidId(missionId);
@@ -68,6 +66,7 @@ service cloud.firestore {
     function isValidTopic(data) {
       return data.keys().hasAll(['id', 'userId', 'name', 'createdAt'])
         && data.keys().size() == 4
+        && isValidId(data.id)
         && data.userId == request.auth.uid
         && data.name is string && data.name.size() <= 100
         && data.createdAt == request.time;
@@ -76,6 +75,7 @@ service cloud.firestore {
     function isValidEntry(data) {
       return data.keys().hasAll(['id', 'topicId', 'userId', 'date', 'deductions', 'updatedAt'])
         && data.keys().size() == 6
+        && isValidId(data.id)
         && data.userId == request.auth.uid
         && data.date is string
         && data.deductions is string && data.deductions.size() <= 10000
@@ -83,23 +83,23 @@ service cloud.firestore {
     }
 
     match /users/{userId}/topics/{topicId} {
-      allow list: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidTopic(incoming());
-      allow update: if isOwner(userId) && isValidTopic(incoming()) && (
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(userId) && isValidId(topicId);
+      allow create: if isOwner(userId) && isValidId(topicId) && isValidTopic(incoming());
+      allow update: if isOwner(userId) && isValidId(topicId) && isValidTopic(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly(['name'])
       );
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) && isValidId(topicId);
     }
 
     match /users/{userId}/topics/{topicId}/entries/{entryId} {
-      allow list: if isOwner(userId);
-      allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidEntry(incoming());
-      allow update: if isOwner(userId) && isValidEntry(incoming()) && (
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(userId) && isValidId(entryId);
+      allow create: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming());
+      allow update: if isOwner(userId) && isValidId(entryId) && isValidEntry(incoming()) && (
         incoming().diff(existing()).affectedKeys().hasOnly(['deductions', 'updatedAt'])
       );
-      allow delete: if isOwner(userId);
+      allow delete: if isOwner(userId) && isValidId(entryId);
     }
   }
 }
