@@ -9,7 +9,8 @@ import {
   onSnapshot, 
   query, 
   orderBy,
-  getDocs
+  getDocs,
+  where
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -46,13 +47,13 @@ export function IntelligenceReport() {
 
       // 2. Fetch all Topics & Entries
       const topicsRef = collection(db, 'users', user.uid, 'topics');
-      const topicsSnap = await getDocs(topicsRef);
+      const topicsSnap = await getDocs(query(topicsRef, where('userId', '==', user.uid)));
       const topics = topicsSnap.docs.map(d => d.data() as JournalTopic);
 
       const allEntries: JournalEntry[] = [];
       for (const topic of topics) {
         const entriesRef = collection(db, 'users', user.uid, 'topics', topic.id, 'entries');
-        const entriesSnap = await getDocs(entriesRef);
+        const entriesSnap = await getDocs(query(entriesRef, where('userId', '==', user.uid)));
         allEntries.push(...entriesSnap.docs.map(d => d.data() as JournalEntry));
       }
 

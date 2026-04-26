@@ -8,7 +8,8 @@ import {
   collection, 
   onSnapshot, 
   query, 
-  orderBy 
+  orderBy,
+  where 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -30,7 +31,11 @@ export function JournalTab() {
   useEffect(() => {
     if (!user) return;
     const topicsRef = collection(db, 'users', user.uid, 'topics');
-    const q = query(topicsRef, orderBy('createdAt', 'desc'));
+    const q = query(
+      topicsRef, 
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setTopics(snapshot.docs.map(doc => doc.data() as JournalTopic));
@@ -45,7 +50,11 @@ export function JournalTab() {
       return;
     }
     const entriesRef = collection(db, 'users', user.uid, 'topics', selectedTopic.id, 'entries');
-    const q = query(entriesRef, orderBy('date', 'desc'));
+    const q = query(
+      entriesRef, 
+      where('userId', '==', user.uid),
+      orderBy('date', 'desc')
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setEntries(snapshot.docs.map(doc => doc.data() as JournalEntry));

@@ -65,7 +65,11 @@ export function useShadowStore() {
 
     const today = new Date().toISOString().split('T')[0];
     const missionsRef = collection(db, 'users', user.uid, 'missions');
-    const q = query(missionsRef, where('date', '==', today));
+    const q = query(
+      missionsRef, 
+      where('userId', '==', user.uid),
+      where('date', '==', today)
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (snapshot.empty) {
