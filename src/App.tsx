@@ -10,56 +10,31 @@ import {
   LayoutDashboard, 
   BarChart3, 
   Settings as SettingsIcon,
-  Search,
   Scan,
-  Zap,
-  Sword,
   LogIn,
   LogOut,
   BookText,
   BrainCircuit
 } from 'lucide-react';
 import { useShadowStore } from './hooks/useShadowStore';
-import { MissionCard } from './components/MissionCard';
-import { FocusMode } from './components/FocusMode';
 import { StatsDashboard } from './components/StatsDashboard';
 import { JournalTab } from './components/JournalTab';
 import { IntelligenceReport } from './components/IntelligenceReport';
-import { Mission } from './types';
+import { CaseSimulationHub } from './components/CaseSimulationHub';
 import { useAuth } from './context/AuthContext';
 import { signInWithGoogle, auth } from './lib/firebase';
 import { signOut } from 'firebase/auth';
 
-type Tab = 'missions' | 'stats' | 'journal' | 'intelligence' | 'settings';
+type Tab = 'ops' | 'stats' | 'journal' | 'intelligence' | 'settings';
 
 export default function App() {
   const { user, loading: authLoading } = useAuth();
-  const { stats, missions, completeMission, updateMissionNotes, setChessUsername, loading: storeLoading } = useShadowStore();
-  const [activeTab, setActiveTab] = useState<Tab>('missions');
-  const [activeFocusMission, setActiveFocusMission] = useState<Mission | null>(null);
+  const { stats, setChessUsername, loading: storeLoading } = useShadowStore();
+  const [activeTab, setActiveTab] = useState<Tab>('ops');
   const [editingChessUser, setEditingChessUser] = useState(false);
   const [chessUserTemp, setChessUserTemp] = useState(stats.chessUsername || '');
 
   const isShadowModeUnlocked = stats.streak >= 7;
-  const isSunday = new Date().getDay() === 0;
-
-  const completionPercent = useMemo(() => {
-    if (missions.length === 0) return 0;
-    return (missions.filter(m => m.isCompleted).length / missions.length) * 100;
-  }, [missions]);
-
-  // Special Challenge
-  const specialChallenge = useMemo(() => {
-    const day = new Date().getDate();
-    const challenges = [
-      "Identify one inconsistency in your environment today.",
-      "Spot 3 repeating patterns in your gaming/activity.",
-      "Predict a conversation outcome before it reveals.",
-      "Analyze a stranger's intent from 3 subtle cues.",
-      "Find the flaw in an argument you heard today."
-    ];
-    return challenges[day % challenges.length];
-  }, []);
 
   if (authLoading) {
     return (
@@ -110,7 +85,7 @@ export default function App() {
           <div className="text-[10px] font-mono font-bold text-shadow-muted uppercase tracking-tighter tracking-[0.2em]">CT.SYS</div>
         </div>
 
-        <NavButton active={activeTab === 'missions'} onClick={() => setActiveTab('missions')} icon={LayoutDashboard} label="Missions" />
+        <NavButton active={activeTab === 'ops'} onClick={() => setActiveTab('ops')} icon={LayoutDashboard} label="Operations" />
         <NavButton active={activeTab === 'stats'} onClick={() => setActiveTab('stats')} icon={BarChart3} label="Analysis" />
         <NavButton active={activeTab === 'journal'} onClick={() => setActiveTab('journal')} icon={BookText} label="Journal" />
         <NavButton active={activeTab === 'intelligence'} onClick={() => setActiveTab('intelligence')} icon={BrainCircuit} label="Intelligence" />
@@ -137,52 +112,14 @@ export default function App() {
         </header>
 
         <AnimatePresence mode="wait">
-          {activeTab === 'missions' && (
+          {activeTab === 'ops' && (
             <motion.section 
-              key="missions"
+              key="ops"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="space-y-8"
             >
-              {/* Missions List Header */}
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-[10px] uppercase tracking-[0.2em] text-shadow-muted">Daily Operations</h2>
-                <span className="text-[10px] px-2 py-0.5 border border-shadow-accent/50 text-shadow-accent rounded-full">
-                  {missions.filter(m => !m.isCompleted).length} Pending
-                </span>
-              </div>
-
-              {/* Missions List */}
-              <div className="space-y-2">
-                {missions.map((mission) => (
-                  <MissionCard 
-                    key={mission.id}
-                    mission={mission}
-                    onComplete={() => completeMission(mission.id)}
-                    onStartFocus={() => setActiveFocusMission(mission)}
-                    onUpdateNotes={(notes: string) => updateMissionNotes(mission.id, notes)}
-                  />
-                ))}
-              </div>
-
-              {/* Daily Progress Info */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                <div className="p-4 border border-shadow-border rounded-sm bg-shadow-card/30">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-shadow-accent/50 mb-2">Special Intelligence Challenge</p>
-                  <p className="text-xs leading-relaxed text-shadow-muted">{specialChallenge}</p>
-                </div>
-
-                {isSunday && (
-                  <div className="p-4 border border-red-900/30 rounded-sm bg-red-950/10">
-                    <div className="flex items-center gap-2 text-red-500 mb-2">
-                      <Sword size={12} />
-                      <span className="text-[10px] font-mono uppercase font-bold tracking-widest">Weekly Boss Mission</span>
-                    </div>
-                    <p className="text-xs text-shadow-muted">Critical Event: Full Case Analysis Challenge in progress.</p>
-                  </div>
-                )}
-              </div>
+              <CaseSimulationHub />
             </motion.section>
           )}
 
@@ -277,18 +214,6 @@ export default function App() {
           )}
         </AnimatePresence>
       </main>
-
-      {/* Focus Mode Overlay */}
-      <AnimatePresence>
-        {activeFocusMission && (
-          <FocusMode 
-            mission={activeFocusMission} 
-            chessUsername={stats.chessUsername}
-            onClose={() => setActiveFocusMission(null)}
-            onComplete={() => completeMission(activeFocusMission.id)}
-          />
-        )}
-      </AnimatePresence>
 
       <footer className="fixed bottom-6 right-8 hidden md:block">
         <div className="flex items-center gap-3 text-shadow-muted opacity-30">

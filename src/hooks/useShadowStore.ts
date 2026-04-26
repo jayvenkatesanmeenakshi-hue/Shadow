@@ -11,12 +11,14 @@ import {
   orderBy,
   serverTimestamp,
   writeBatch,
+  Timestamp,
   addDoc
 } from 'firebase/firestore';
 import { db, OperationType, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
-import { Mission, UserStats, LEVELS, XP_PER_LEVEL, BADGES, JournalTopic, JournalEntry } from '../types';
+import { Mission, UserStats, LEVELS, XP_PER_LEVEL, BADGES, JournalTopic, JournalEntry, DetectiveCase } from '../types';
 import { DEFAULT_MISSIONS, FOCUS_ROTATION } from '../constants';
+import { SimulationService } from '../services/SimulationService';
 
 const INITIAL_STATS: UserStats = {
   xp: 0,
@@ -255,6 +257,100 @@ export function useShadowStore() {
     }
   };
 
+  const createCase = async (type: 'daily' | 'weekly' | 'monthly') => {
+    if (!user || !stats) return;
+    try {
+      const caseData = await SimulationService.generateCase(type, stats);
+      const caseRef = doc(collection(db, 'users', user.uid, 'cases'));
+      const now = new Date();
+      
+      let expires = new Date();
+      if (type === 'daily') {
+        expires.setHours(23, 59, 59, 999);
+      } else if (type === 'weekly') {
+        // Set to next Sunday 23:59:59
+        const daysUntilSunday = (7 - now.getDay()) % 7;
+        expires.setDate(now.getDate() + (daysUntilSunday || 7));
+        expires.setHours(23, 59, 59, 999);
+      } else {
+        // Monthly: Set to current/next Sunday test window
+        // But for expiration of the *record* let's just make it end of month
+        expires.setMonth(now.getMonth() + 1);
+        expires.setDate(0);
+        expires.setHours(23, 59, 59, 999);
+      }
+
+      await setDoc(caseRef, {
+        ...caseData,
+        id: caseRef.id,
+        userId: user.uid,
+        createdAt: serverTimestamp(),
+        expiresAt: Timestamp.fromDate(expires),
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}/cases`);
+    }
+  };
+
+  const submitCaseSolution = async (caseId: string, solution: string) => {
+    if (!user || !stats) return null;
+    const caseRef = doc(db, 'users', user.uid, 'cases', caseId);
+    try {
+      const caseSnap = await getDoc(caseRef);
+      if (!caseSnap.exists()) return null;
+      const caseData = caseSnap.data() as DetectiveCase;
+
+      const result = await SimulationService.evaluateDeduction(caseData, solution);
+      const passed = result.score >= 60;
+
+      await updateDoc(caseRef, {
+        solution,
+        evaluation: result.evaluation,
+        score: result.score,
+        status: passed ? 'passed' : 'failed',
+        updatedAt: serverTimestamp()
+      });
+
+      if (passed) {
+        const batch = writeBatch(db);
+        const userRef = doc(db, 'users', user.uid);
+        const xpGain = caseData.xpReward;
+        const newXp = stats.xp + xpGain;
+        const newLevel = Math.min(Math.floor(newXp / XP_PER_LEVEL), LEVELS.length - 1);
+        
+        const discipline = caseData.discipline;
+        const currentCategoryValue = stats.categories[discipline as keyof typeof stats.categories] || 0;
+
+        batch.update(userRef, {
+          xp: newXp,
+          level: newLevel,
+          completedCount: stats.completedCount + 1,
+          [`categories.${discipline}`]: currentCategoryValue + (caseData.type === 'daily' ? 10 : caseData.type === 'weekly' ? 50 : 200),
+          updatedAt: serverTimestamp()
+        });
+        await batch.commit();
+      }
+
+      return result;
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/cases/${caseId}`);
+      return null;
+    }
+  };
+
+  const deleteCase = async (caseId: string) => {
+    if (!user) return;
+    const caseRef = doc(db, 'users', user.uid, 'cases', caseId);
+    try {
+      await updateDoc(caseRef, { 
+        status: 'dismissed',
+        updatedAt: serverTimestamp()
+      });
+    } catch (err) {
+      handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}/cases/${caseId}`);
+    }
+  };
+
   return {
     stats,
     missions,
@@ -264,6 +360,9 @@ export function useShadowStore() {
     addJournalTopic,
     addJournalEntry,
     updateJournalEntry,
+    createCase,
+    submitCaseSolution,
+    deleteCase,
     loading
   };
 }

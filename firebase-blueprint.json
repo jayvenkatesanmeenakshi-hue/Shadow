@@ -69,6 +69,30 @@
         "updatedAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "topicId", "userId", "date", "deductions", "updatedAt"]
+    },
+    "DetectiveCase": {
+      "title": "Detective Case",
+      "description": "An AI-simulated role-play case.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "enum": ["daily", "weekly", "monthly"] },
+        "title": { "type": "string" },
+        "scenario": { "type": "string" },
+        "clues": { "type": "array", "items": { "type": "string" } },
+        "discipline": { "enum": ["logic", "observation", "strategy", "discipline"] },
+        "difficulty": { "enum": ["low", "medium", "high", "legendary"] },
+        "status": { "enum": ["available", "passed", "failed", "dismissed"] },
+        "xpReward": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "hiddenTruth": { "type": "string" },
+        "solution": { "type": "string" },
+        "evaluation": { "type": "string" },
+        "score": { "type": "integer" }
+      },
+      "required": ["id", "userId", "type", "title", "scenario", "clues", "discipline", "difficulty", "status", "xpReward", "createdAt", "expiresAt", "hiddenTruth"]
     }
   },
   "firestore": {
@@ -87,6 +111,10 @@
     "users/{userId}/topics/{topicId}/entries/{entryId}": {
       "schema": "JournalEntry",
       "description": "Daily entries for a specific topic."
+    },
+    "users/{userId}/cases/{caseId}": {
+      "schema": "DetectiveCase",
+      "description": "Simulated detective cases for the user."
     }
   }
 }

@@ -68,3 +68,22 @@ export interface IntelligenceReport {
   percentile: number;
   updatedAt: any;
 }
+
+export interface DetectiveCase {
+  id: string;
+  userId: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  title: string;
+  scenario: string;
+  clues: string[];
+  discipline: 'logic' | 'observation' | 'strategy' | 'discipline';
+  difficulty: 'low' | 'medium' | 'high' | 'legendary';
+  status: 'available' | 'passed' | 'failed';
+  xpReward: number;
+  createdAt: any;
+  expiresAt: any;
+  hiddenTruth: string;
+  solution?: string;
+  evaluation?: string;
+  score?: number;
+}

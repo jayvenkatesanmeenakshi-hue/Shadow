@@ -101,5 +101,30 @@ service cloud.firestore {
       );
       allow delete: if isOwner(userId) && isValidId(entryId);
     }
+
+    // Detective Case Validation
+    function isValidCase(data) {
+      return data.keys().hasAll(['id', 'userId', 'type', 'title', 'scenario', 'clues', 'hiddenTruth', 'discipline', 'difficulty', 'status', 'xpReward', 'createdAt', 'expiresAt'])
+        && data.keys().size() >= 13
+        && isValidId(data.id)
+        && data.userId == request.auth.uid
+        && data.type in ['daily', 'weekly', 'monthly']
+        && data.discipline in ['logic', 'observation', 'strategy', 'discipline']
+        && data.difficulty in ['low', 'medium', 'high', 'legendary']
+        && data.status in ['available', 'passed', 'failed', 'dismissed']
+        && data.xpReward is int
+        && (!data.keys().hasAll(['updatedAt']) || data.updatedAt == request.time);
+    }
+
+    match /users/{userId}/cases/{caseId} {
+      allow list: if isOwner(userId) && resource.data.userId == request.auth.uid;
+      allow get: if isOwner(userId) && isValidId(caseId);
+      allow create: if isOwner(userId) && isValidId(caseId) && isValidCase(incoming()) && incoming().createdAt == request.time;
+      allow update: if isOwner(userId) && isValidId(caseId) && (
+        // Allow updating solution, results, status, and updatedAt
+        (incoming().diff(existing()).affectedKeys().hasOnly(['solution', 'evaluation', 'score', 'status', 'updatedAt']) && isValidCase(incoming()))
+      );
+      allow delete: if isOwner(userId) && isValidId(caseId);
+    }
   }
 }

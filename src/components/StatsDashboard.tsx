@@ -15,6 +15,19 @@ export function StatsDashboard({ stats }: StatsDashboardProps) {
   const currentLevelXp = stats.xp % XP_PER_LEVEL;
   const progressPercent = (currentLevelXp / XP_PER_LEVEL) * 100;
 
+  // Kira (Light Yagami) Percentile Calculation
+  const calculateKiraPercentile = () => {
+    const totalCategoryScore = stats.categories.logic + stats.categories.observation + stats.categories.strategy + stats.categories.discipline;
+    const levelScore = (stats.level / 6) * 100; // max level is 5 (0-indexed)
+    const categoryScore = (totalCategoryScore / 80) * 100; 
+    const streakScore = (stats.streak / 30) * 100;
+    
+    const percentile = (levelScore * 0.3 + categoryScore * 0.5 + streakScore * 0.2);
+    return Math.min(percentile, 99.9).toFixed(1);
+  };
+
+  const kiraPercentile = calculateKiraPercentile();
+
   const categories = [
     { name: 'Logic', value: stats.categories.logic, icon: Brain, color: 'text-blue-400' },
     { name: 'Observation', value: stats.categories.observation, icon: Target, color: 'text-green-400' },
@@ -32,9 +45,16 @@ export function StatsDashboard({ stats }: StatsDashboardProps) {
             Shadow <span className="text-shadow-muted font-mono text-sm tracking-tighter">[{LEVELS[stats.level].toUpperCase()}]</span>
           </h1>
         </div>
-        <div className="text-right">
-          <div className="text-[10px] font-mono text-shadow-muted uppercase tracking-widest mb-1">Active Streak</div>
-          <div className="text-2xl font-light text-shadow-text">{stats.streak} <span className="text-xs text-shadow-muted">DAYS</span></div>
+        <div className="flex items-center gap-6">
+          <div className="text-right">
+            <div className="text-[10px] font-mono text-shadow-muted uppercase tracking-widest mb-1">Kira Percentile</div>
+            <div className="text-2xl font-light text-shadow-accent">{kiraPercentile}%</div>
+          </div>
+          <div className="h-10 w-[1px] bg-shadow-border" />
+          <div className="text-right">
+            <div className="text-[10px] font-mono text-shadow-muted uppercase tracking-widest mb-1">Active Streak</div>
+            <div className="text-2xl font-light text-shadow-text">{stats.streak} <span className="text-xs text-shadow-muted">DAYS</span></div>
+          </div>
         </div>
       </div>
 
